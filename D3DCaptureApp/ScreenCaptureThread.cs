@@ -44,62 +44,66 @@ namespace D3DCaptureApp {
             var texture_screen = new Texture2D(device,texture_description);
 
             Task.Factory.StartNew(() => {
-                using(var output_clone = output1.DuplicateOutput(device)) {
-                    // Preload some resources and objects before cycling
-                    SharpDX.DXGI.Resource output_frame_resource;
-                    OutputDuplicateFrameInformation output_frame_info;
-                    var screen_capture_rect = new Rectangle(0,0,screen_width,screen_height);
+            using(var output_clone = output1.DuplicateOutput(device)) {
+                // Preload some resources and objects before cycling
+                SharpDX.DXGI.Resource output_frame_resource;
+                OutputDuplicateFrameInformation output_frame_info;
+                var screen_capture_rect = new Rectangle(0,0,screen_width,screen_height);
 
-                    while(_run) {
-                        try {
-                            // Try to get duplicated frame within given time is ms
-                            output_clone.AcquireNextFrame(5,out output_frame_info,out output_frame_resource);
+                while(_run) {
+                    int start = DateTime.Now.Millisecond;
+                    try {
+                        // Try to get duplicated frame within given time is ms
+                        output_clone.AcquireNextFrame(5,out output_frame_info,out output_frame_resource);
 
-                            // Copy resource into memory that can be accessed by the CPU
-                            using(var texture_screen_acquired = output_frame_resource.QueryInterface<Texture2D>())
-                                device.ImmediateContext.CopyResource(texture_screen_acquired,texture_screen);
+                        // Copy resource into memory that can be accessed by the CPU
+                        using(var texture_screen_acquired = output_frame_resource.QueryInterface<Texture2D>())
+                            device.ImmediateContext.CopyResource(texture_screen_acquired,texture_screen);
 
-                            // Get the desktop capture texture
-                            var map_src = device.ImmediateContext.MapSubresource(texture_screen,0,MapMode.Read,SharpDX.Direct3D11.MapFlags.None);
+                        // Get the desktop capture texture
+                        var map_src = device.ImmediateContext.MapSubresource(texture_screen,0,MapMode.Read,SharpDX.Direct3D11.MapFlags.None);
 
-                            // Create Drawing.Bitmap
-                            using(var bitmap_screen = new Bitmap(screen_width,screen_height,PixelFormat.Format32bppArgb)) {
-                                // Copy pixels from screen capture Texture to GDI bitmap
-                                var map_dest = bitmap_screen.LockBits(
-                                    screen_capture_rect,
-                                    ImageLockMode.WriteOnly,
-                                    bitmap_screen.PixelFormat
-                                );
-                                var pointer_src = map_src.DataPointer;
-                                var pointer_dest = map_dest.Scan0;
-                                for(int y = 0;y<screen_height;y++) {
-                                    Utilities.CopyMemory(pointer_dest,pointer_src,screen_width*4); // Copy a single line (4 bytes per pixel).
+                        // Create Drawing.Bitmap
+                        using(var bitmap_screen = new Bitmap(screen_width,screen_height,PixelFormat.Format32bppArgb)) {
+                            // Copy pixels from screen capture Texture to GDI bitmap
+                            var map_dest = bitmap_screen.LockBits(
+                                screen_capture_rect,
+                                ImageLockMode.WriteOnly,
+                                bitmap_screen.PixelFormat
+                            );
+                            var pointer_src = map_src.DataPointer;
+                            var pointer_dest = map_dest.Scan0;
+                            for(int y = 0;y<screen_height;y++) {
+                                Utilities.CopyMemory(pointer_dest,pointer_src,screen_width*4); // Copy a single line (4 bytes per pixel).
 
-                                    // Advance pointers
-                                    pointer_src=IntPtr.Add(pointer_src,map_src.RowPitch);
-                                    pointer_dest=IntPtr.Add(pointer_dest,map_dest.Stride);
-                                }
-
-                                // Release source and destination locks
-                                bitmap_screen.UnlockBits(map_dest);
-                                device.ImmediateContext.UnmapSubresource(texture_screen,0);
-
-                                using(var ms = new MemoryStream()) {
-                                    bitmap_screen.Save(ms,ImageFormat.Bmp); // Save bitmap pixels in a stream
-                                    onFrameReady?.Invoke(this,ms.ToArray()); // Return bitmap pixels from a stream to the caller
-                                    _init=true;
-                                }
+                                // Advance pointers
+                                pointer_src=IntPtr.Add(pointer_src,map_src.RowPitch);
+                                pointer_dest=IntPtr.Add(pointer_dest,map_dest.Stride);
                             }
-                            output_frame_resource.Dispose();
-                            output_clone.ReleaseFrame();
-                        } catch(SharpDXException e) {
-                            if(e.ResultCode.Code!=SharpDX.DXGI.ResultCode.WaitTimeout.Result.Code) {
-                                Trace.TraceError(e.Message);
-                                Trace.TraceError(e.StackTrace);
+
+                            // Release source and destination locks
+                            bitmap_screen.UnlockBits(map_dest);
+                            device.ImmediateContext.UnmapSubresource(texture_screen,0);
+
+                            using(var ms = new MemoryStream()) {
+                                bitmap_screen.Save(ms,ImageFormat.Bmp); // Save bitmap pixels in a stream
+                                onFrameReady?.Invoke(this,ms.ToArray()); // Return bitmap pixels from a stream to the caller
+                                _init=true;
                             }
                         }
+                        output_frame_resource.Dispose();
+                        output_clone.ReleaseFrame();
+                    } catch(SharpDXException e) {
+                        if(e.ResultCode.Code!=SharpDX.DXGI.ResultCode.WaitTimeout.Result.Code) {
+                            Trace.TraceError(e.Message);
+                            Trace.TraceError(e.StackTrace);
+                        }
                     }
-                }
+                    int end = DateTime.Now.Millisecond;
+
+                    //if((end-start)<15) System.Threading.Thread.Sleep(16-(end-start)); // 60 FPS cap attempt
+                    Console.WriteLine("--TIME_ELAPSED="+(end-start)+"ms");
+                }}
             });
             while(!_init)
                 System.Threading.Thread.Sleep(100);

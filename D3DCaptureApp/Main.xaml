@@ -1,0 +1,20 @@
+﻿<Window x:Class="D3DCaptureApp.Window1"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:D3DCaptureApp"
+        mc:Ignorable="d"
+        Title="D3D Capture Application" Height="120.598" Width="299.423">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="61*"/>
+            <ColumnDefinition Width="378*"/>
+        </Grid.ColumnDefinitions>
+        <Label Content="Welcome! Please select an operation down below." HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+        <Button Name="button_capture_test" Click="listener_button_capture_test" Content="Capture test" HorizontalAlignment="Left" Margin="10,45,0,0" VerticalAlignment="Top" Width="75" Grid.ColumnSpan="2"/>
+        <Button Name="button_host" Click="listener_button_host" Content="Host" HorizontalAlignment="Left" Margin="65,45,0,0" VerticalAlignment="Top" Width="75" Grid.Column="1"/>
+        <Button Name="button_join" Click="listener_button_join" Content="Join" HorizontalAlignment="Left" Margin="166,45,0,0" VerticalAlignment="Top" Width="75" Grid.Column="1"/>
+
+    </Grid>
+</Window>
