@@ -1,19 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace D3DCaptureApp
 {
@@ -31,25 +20,26 @@ namespace D3DCaptureApp
         public void start_capture() {
             var screen_capture_thread = new ScreenCaptureThread();
             screen_capture_thread.onFrameReady+=(sender,frame_bytes) => {
-                Dispatcher.BeginInvoke(new ThreadStart(() => renderer(frame_bytes)));
+                renderer(frame_bytes);
             };
-            screen_capture_thread.Start();
+            screen_capture_thread.start();
         }
 
-        private void renderer(byte[] frame_ms) {
+        private void renderer(byte[] data_image) {
             try {
-                ImgCanvas.Source=LoadImage(frame_ms);
+                BitmapImage image_loaded=load_image(data_image);
+                Dispatcher.BeginInvoke(new ThreadStart(() => ImgCanvas.Source=image_loaded));
                 Console.WriteLine("Frame loaded");
             } catch(Exception e) {
                 Console.WriteLine("Exception: "+e.Message);
             }
         }
 
-        private static BitmapImage LoadImage(byte[] imageData) {
-            if(imageData==null||imageData.Length==0)
+        private static BitmapImage load_image(byte[] data_image) {
+            if(data_image==null||data_image.Length==0)
                 return null;
             var image = new BitmapImage();
-            using(var mem = new MemoryStream(imageData)) {
+            using(var mem = new MemoryStream(data_image)) {
                 mem.Position=0;
                 image.BeginInit();
                 image.CreateOptions=BitmapCreateOptions.PreservePixelFormat;

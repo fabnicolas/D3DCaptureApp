@@ -11,11 +11,10 @@ using System.Threading.Tasks;
 namespace D3DCaptureApp {
     public class ScreenCaptureThread {
         private bool _run, _init;
-
-        public int Size { get; private set; }
+        
         public ScreenCaptureThread() { }
 
-        public void Start() {
+        public void start() {
             _run=true;
             var factory = new Factory1();   // SharpDX DXGI Factory
             var adapter = factory.GetAdapter1(0); // Get first video card (Adapter) 
@@ -46,11 +45,13 @@ namespace D3DCaptureApp {
 
             Task.Factory.StartNew(() => {
                 using(var output_clone = output1.DuplicateOutput(device)) {
+                    // Preload some resources and objects before cycling
+                    SharpDX.DXGI.Resource output_frame_resource;
+                    OutputDuplicateFrameInformation output_frame_info;
+                    var screen_capture_rect = new Rectangle(0,0,screen_width,screen_height);
+
                     while(_run) {
                         try {
-                            SharpDX.DXGI.Resource output_frame_resource;
-                            OutputDuplicateFrameInformation output_frame_info;
-
                             // Try to get duplicated frame within given time is ms
                             output_clone.AcquireNextFrame(5,out output_frame_info,out output_frame_resource);
 
@@ -63,8 +64,6 @@ namespace D3DCaptureApp {
 
                             // Create Drawing.Bitmap
                             using(var bitmap_screen = new Bitmap(screen_width,screen_height,PixelFormat.Format32bppArgb)) {
-                                var screen_capture_rect = new Rectangle(0,0,screen_width,screen_height);
-
                                 // Copy pixels from screen capture Texture to GDI bitmap
                                 var map_dest = bitmap_screen.LockBits(
                                     screen_capture_rect,
@@ -106,7 +105,7 @@ namespace D3DCaptureApp {
                 System.Threading.Thread.Sleep(100);
         }
 
-        public void Stop() {
+        public void stop() {
             _run=false;
         }
 
