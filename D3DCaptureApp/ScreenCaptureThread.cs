@@ -102,7 +102,7 @@ namespace D3DCaptureApp {
                     int end = DateTime.Now.Millisecond;
 
                     //if((end-start)<15) System.Threading.Thread.Sleep(16-(end-start)); // 60 FPS cap attempt
-                    Console.WriteLine("--TIME_ELAPSED="+(end-start)+"ms");
+                    //Console.WriteLine("--TIME_ELAPSED="+(end-start)+"ms");
                 }}
             });
             while(!_init)

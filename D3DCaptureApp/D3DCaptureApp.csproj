@@ -41,12 +41,13 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="SharpDX, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
@@ -82,10 +83,19 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Main.xaml.cs">
-      <DependentUpon>Main.xaml</DependentUpon>
+    <Compile Include="NetClient.cs" />
+    <Compile Include="PacketProtocol.cs" />
+    <Compile Include="ScreenCaptureWPFRenderer.cs" />
+    <Compile Include="WPF_Join.xaml.cs">
+      <DependentUpon>WPF_Join.xaml</DependentUpon>
     </Compile>
-    <Page Include="CaptureWindow.xaml">
+    <Compile Include="WPF_Main.xaml.cs">
+      <DependentUpon>WPF_Main.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WPF_Host.xaml.cs">
+      <DependentUpon>WPF_Host.xaml</DependentUpon>
+    </Compile>
+    <Page Include="WPF_CaptureScreen.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -93,12 +103,21 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="NetServer.cs" />
     <Compile Include="ScreenCaptureThread.cs" />
-    <Compile Include="CaptureWindow.xaml.cs">
-      <DependentUpon>CaptureWindow.xaml</DependentUpon>
+    <Compile Include="WPF_CaptureScreen.xaml.cs">
+      <DependentUpon>WPF_CaptureScreen.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Main.xaml">
+    <Page Include="WPF_Join.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="WPF_Main.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WPF_Host.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
