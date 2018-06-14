@@ -90,13 +90,16 @@ namespace D3DCaptureApp {
             try {
                 byte[] buffer = new Byte[4573600];
                 _packetizer.onTransferComplete=(data => {
-                    Console.WriteLine("[Client] Depacking done. Data buffer length="+data.Length+". Decompressing...");
-                    byte[] extracted_data=process_data(data,data.Length);
-                    if(extracted_data!=null) callback(extracted_data);
+                    if(data!=null) {
+                        Console.WriteLine("[Client] Depacking done. Data buffer length="+data.Length+". Decompressing...");
+                        byte[] extracted_data = process_data(data,data.Length);
+                        if(extracted_data!=null) callback(extracted_data);
+                    }
                 });
                 while(true) {   // Read input stream
                     try {
                         NetworkStream stream = _client.GetStream();
+                        Console.WriteLine("[Client] Waiting for server response...");
                         int bytes = stream.Read(buffer,0,buffer.Length);
                         byte[] data = new byte[bytes];
                         for(int i = 0;i<bytes;i++) {
@@ -104,14 +107,20 @@ namespace D3DCaptureApp {
                         }
                         Console.WriteLine("[Client] Received from server "+bytes+" bytes. Unpacking...");
                         _packetizer.HandleReadData(data);
-                    } catch(ObjectDisposedException) {
-                        Console.WriteLine("Object disposed exception");
-                        stop_client();
-                        start_client();
+                    }catch(Exception e) {
+                        if(e is System.Net.ProtocolViolationException) {
+                            Console.WriteLine("[Client] Error on frame dimension. Sending data will be skipped.");
+                        }else if(e is ObjectDisposedException) {
+                            Console.WriteLine("Object disposed exception");
+                            stop_client();
+                            start_client();
+                        } else {
+                            throw;
+                        }
                     }
                 }
             } catch(Exception e) {
-                Console.WriteLine("[Client] ASYNC_on_server_response error: "+e.Message+"=TYPE="+e.GetType().Name);
+                Console.WriteLine("[Client] on_server_response error: "+e.Message+"=TYPE="+e.GetType().Name);
                 Console.WriteLine(e.StackTrace);
             }
         }

@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="WPF_Join" Height="450" Width="800">
     <Grid>
-        <Image x:Name="ImageCanvas"/>
+        <Image x:Name="ImgCanvas"/>
         <Button Name="button_fullscreen"  Content="Fullscreen" HorizontalAlignment="Left" Margin="707,10,0,0" VerticalAlignment="Top" Width="75"/>
     </Grid>
 </Window>

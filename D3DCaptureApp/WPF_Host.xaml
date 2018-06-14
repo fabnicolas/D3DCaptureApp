@@ -5,8 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:D3DCaptureApp"
         mc:Ignorable="d"
-        Title="WPF_Host" Height="96" Width="188">
+        Title="WPF_Host" Height="390.4" Width="744.8">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="11*"/>
+        </Grid.ColumnDefinitions>
+        <Image Name="ImgCanvas" Grid.ColumnSpan="2"/>
 
     </Grid>
 </Window>

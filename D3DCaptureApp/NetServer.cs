@@ -21,14 +21,14 @@ namespace D3DCaptureApp {
             _packetizer = new FramingProtocol(4573600);
         }
 
-        public async void start_server() {
+        public async void StartServer() {
             _server.Start();
             while(true) {
-                accept_client(await _server.AcceptTcpClientAsync());
+                AcceptClient(await _server.AcceptTcpClientAsync());
             }
         }
 
-        private Guid accept_client(TcpClient client) {
+        private Guid AcceptClient(TcpClient client) {
             Guid new_client_id = Guid.NewGuid();
             try {
                 _clients.TryAdd(new_client_id,client);
@@ -46,14 +46,21 @@ namespace D3DCaptureApp {
             }
         }
 
-        public bool acquire_connected_client(Guid client_id,out TcpClient client) {
+        public bool AcquireConnectedClient(Guid client_id,out TcpClient client) {
             return _clients.TryGetValue(client_id,out client);
+        }
+
+        public bool DisconnectClient(Guid client_id) {
+            TcpClient client_discarded;
+            bool try_remove=_clients.TryRemove(client_id,out client_discarded);
+            client_discarded.Dispose();
+            return try_remove;
         }
         
         public async Task<bool> ASYNC_send(Guid client_id, byte[] data) {
             try {
                 TcpClient client;
-                if(acquire_connected_client(client_id, out client)) {
+                if(AcquireConnectedClient(client_id, out client)) {
                     Console.WriteLine("Invoked...");
                     data=LZ4Compressor.Compress(data);
                     data=FramingProtocol.WrapMessage(data);
@@ -75,7 +82,7 @@ namespace D3DCaptureApp {
         }
 
         public async Task<bool> ASYNC_send_integers(Guid client_id, int[] data) {
-            byte[] bytes_data = toByteArray(data);
+            byte[] bytes_data = ConvertArraysIntToByte(data);
             return await ASYNC_send(client_id, bytes_data);
         }
         
@@ -87,48 +94,51 @@ namespace D3DCaptureApp {
                 status=(!(await task_sendclient) ? false : status);
             }
             return await Task.WhenAll(tasks.ToArray());
-            //return await Task.FromResult<bool>(status);
         }
 
-        public bool send(Guid client_id,byte[] data) {
+        public bool Send(Guid client_id,byte[] data) {
             try {
                 TcpClient client;
-                if(acquire_connected_client(client_id,out client)) {
-                    Console.WriteLine("[Server] [send (Time: "+DateTime.Now+": "+DateTime.Now.Millisecond+"ms)] Invoked...");
-                    Console.Write("[Server] ");
+                if(AcquireConnectedClient(client_id,out client)) {
+                    Console.WriteLine("[Server] [send (Time: "+DateTime.Now+": "+DateTime.Now.Millisecond+"ms)] Invoked on "+data.Length+" data...");
                     data=LZ4Compressor.Compress(data);
                     data=FramingProtocol.WrapMessage(data);
                     client.GetStream().Write(data,0,data.Length);
-                    Console.WriteLine("[Server] ... data transferred at time: "+DateTime.Now+": "+DateTime.Now.Millisecond+"ms");
-                    return true;//return await Task.FromResult<bool>(true);
+                    Console.WriteLine("[Server] ... "+data.Length+" data transferred at time: "+DateTime.Now+": "+DateTime.Now.Millisecond+"ms");
+                    return true;
                 } else {
-                    return false;//await Task.FromResult<bool>(false);
+                    return false;
                 }
             } catch(Exception e) {
-                Console.WriteLine("[Server] send error: "+e.Message);
-                Console.WriteLine(e.StackTrace);
-                return false;// await Task.FromResult<bool>(false);
+                if(e is IOException || e is InvalidOperationException || e is ObjectDisposedException) {
+                    Console.WriteLine("[Server] Socket connection lost with client with guid: "+client_id+". Client detached from server.");
+                    DisconnectClient(client_id);
+                } else {
+                    Console.WriteLine("[Server] send error: "+e.Message);
+                    Console.WriteLine(e.StackTrace);
+                }
+                return false;
             }
         }
 
-        public bool send_bytes(Guid client_id,byte[] data) {
-            return send(client_id,data);
+        public bool SendBytes(Guid client_id,byte[] data) {
+            return Send(client_id,data);
         }
 
-        public bool send_integers(Guid client_id,int[] data) {
-            byte[] bytes_data = toByteArray(data);
-            return send(client_id,bytes_data);
+        public bool SendIntegers(Guid client_id,int[] data) {
+            byte[] bytes_data = ConvertArraysIntToByte(data);
+            return Send(client_id,bytes_data);
         }
 
         public bool sendToAll_bytes(byte[] data) {
             bool status = true;
             foreach(KeyValuePair<Guid,TcpClient> client in _clients) {
-                status=(!(send_bytes(client.Key,data)))==false ? false : status;
+                status=(!(SendBytes(client.Key,data)))==false ? false : status;
             }
             return status;
         }
 
-        public static byte[] toByteArray(int[] data) {
+        public static byte[] ConvertArraysIntToByte(int[] data) {
             byte[] bytes;
             using(var ms = new MemoryStream())
             using(var bw = new BinaryWriter(ms)) {

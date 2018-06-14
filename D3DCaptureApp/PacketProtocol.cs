@@ -11,7 +11,7 @@ namespace D3DCaptureApp {
         // Protocol details
         private int n_bytes_received;   // The amount of bytes received (The total one is buffer_data.Length)
         private int max_length_message; // Maximum amount of data allowed (To prevent specific DDoS attack)
-        private bool _instadrop = true; // (Temporary) Drop packets if connection isn't fast enough (For streaming)
+        private bool _instadrop = false; // (Temporary) Drop packets if connection isn't fast enough (For streaming)
 
         // Callbacks
         public Action<byte[]> onTransferComplete { get; set; }  // Transfer is completed
