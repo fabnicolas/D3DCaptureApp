@@ -21,7 +21,6 @@ namespace D3DCaptureApp {
             Console.WriteLine("Capture started.");
             ScreenCaptureWPFRenderer renderer = new ScreenCaptureWPFRenderer();
             await _client.ASYNC_on_server_response((frame_bytes) => {
-                if(frame_bytes==null) { Console.WriteLine("MUST PATCH!!!"); return; }
                 Console.Write("[Join] Data="+frame_bytes.Length+"... ");
                 Dispatcher.BeginInvoke(new ThreadStart(() => {
                     this.ImageCanvas.Source=renderer.render(frame_bytes);

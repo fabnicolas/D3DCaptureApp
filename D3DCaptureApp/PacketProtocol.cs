@@ -1,16 +1,23 @@
 ﻿using System;
 
 namespace D3DCaptureApp {
+    /// <summary>
+    /// 
+    /// </summary>
     public class FramingProtocol {
+        // Packet data
         private byte[] buffer_payload, buffer_data;
-        private int n_bytes_received;
-        private int max_length_message; // Max data allowed
-        private bool _instadrop = true;
 
-        public Action<byte[]> onTransferComplete { get; set; }  // Callback when message has arrived
+        // Protocol details
+        private int n_bytes_received;   // The amount of bytes received (The total one is buffer_data.Length)
+        private int max_length_message; // Maximum amount of data allowed (To prevent specific DDoS attack)
+        private bool _instadrop = true; // (Temporary) Drop packets if connection isn't fast enough (For streaming)
+
+        // Callbacks
+        public Action<byte[]> onTransferComplete { get; set; }  // Transfer is completed
 
         public FramingProtocol(int max_length_message) {
-            buffer_payload=new byte[sizeof(int)];   // Payload has sizeof(int) size
+            buffer_payload=new byte[sizeof(int)];   // Payload is at beginning of the packet and it has integer size
             this.max_length_message=max_length_message;
         }
 
@@ -28,14 +35,18 @@ namespace D3DCaptureApp {
 
         public void HandleReadData(byte[] data) {
             int i = 0;
-            while(i!=data.Length) {
+            if(data!=null) while(i!=data.Length) {
                 int n_bytes_available = data.Length-i;
 
+                // Buffer selection (Payload must be filled before filling data).
                 byte[] buffer;
-                if(buffer_data==null)
+                if(buffer_data==null) {
+                    Console.WriteLine("[PacketProtocol] Using payload buffer");
                     buffer=buffer_payload;
-                else
+                } else {
+                    Console.WriteLine("[PacketProtocol] Using data buffer");
                     buffer=buffer_data;
+                }
 
                 int n_bytes_requested = buffer.Length-n_bytes_received;
 
@@ -45,31 +56,14 @@ namespace D3DCaptureApp {
                 i+=n_bytes_transferred;
 
 
-                Console.WriteLine("i="+i+",d.L="+data.Length+",expected="+(buffer_data!=null ? buffer_data.Length : 4)+",nrec="+n_bytes_received+",nreq="+n_bytes_requested+",nt="+n_bytes_transferred);
+                Console.WriteLine("[PacketProtocol] i="+i+",d.L="+data.Length+",expected="+(buffer_data!=null ? buffer_data.Length : 4)+",nrec="+n_bytes_received+",nreq="+n_bytes_requested+",nt="+n_bytes_transferred+",payload="+BitConverter.ToInt32(buffer_payload,0));
 
 
                 ReadCompleted(n_bytes_transferred); // Notify "read completion"
             }
+            Console.WriteLine("[PacketProtocol] No more data");
         }
-
-        /*
-        public void TestMethod1() {
-            int numMessages = 0;
-            var messages = new string[2];
-            var packetizer = new PacketProtocol(2000);
-            packetizer.MessageArrived+=message =>
-            {
-                messages[numMessages]=Encoding.UTF8.GetString(message);
-                ++numMessages;
-            };
-            packetizer.DataReceived(
-            PacketProtocol.WrapMessage(Encoding.UTF8.GetBytes("Hello")).Concat(
-            PacketProtocol.WrapMessage(Encoding.UTF8.GetBytes("World"))).ToArray());
-            Assert.AreEqual(2,numMessages);
-            Assert.AreEqual("Hello",messages[0]);
-            Assert.AreEqual("World",messages[1]);
-        }
-        */
+        
         private void ReadCompleted(int count) {
             n_bytes_received+=count; // Get the number of bytes read into the buffer
 
@@ -99,7 +93,7 @@ namespace D3DCaptureApp {
                 bool reset = false;
                 if(n_bytes_received==buffer_data.Length) {
                     // Packet is ready! Let's callback with the full data.
-                    Console.WriteLine(DateTime.Now+": COMPLETE");
+                    Console.WriteLine(DateTime.Now+": COMPLETE ("+n_bytes_received+")");
                     if(onTransferComplete!=null)
                         onTransferComplete(this.buffer_data);
                     reset=true;
@@ -107,6 +101,7 @@ namespace D3DCaptureApp {
                     Console.WriteLine(DateTime.Now+": DROPPED");
                     if(onTransferComplete!=null)
                         onTransferComplete(null);
+                    reset=true;
                 }// Else we haven't gotten all the data buffer yet: just wait for more data to arrive
 
                 if(reset) {

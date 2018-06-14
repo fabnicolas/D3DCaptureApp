@@ -7,6 +7,9 @@ using System.Net.Sockets;
 using System.Threading.Tasks;
 
 namespace D3DCaptureApp {
+    /// <summary>
+    /// Server.
+    /// </summary>
     class NetServer {
         private TcpListener _server;
         private ConcurrentDictionary<Guid,TcpClient> _clients;
@@ -31,12 +34,12 @@ namespace D3DCaptureApp {
                 _clients.TryAdd(new_client_id,client);
                 return new_client_id;
             } catch(ArgumentNullException ane) {
-                Console.WriteLine("Argument is null");
+                Console.WriteLine("Argument is null.");
                 Console.WriteLine(ane.Message);
                 Console.WriteLine(ane.StackTrace);
                 return Guid.Empty;
             } catch(OverflowException ofe) {
-                Console.WriteLine("Maximum number of possible clients reached");
+                Console.WriteLine("Maximum number of possible clients reached.");
                 Console.WriteLine(ofe.Message);
                 Console.WriteLine(ofe.StackTrace);
                 return Guid.Empty;
@@ -51,17 +54,19 @@ namespace D3DCaptureApp {
             try {
                 TcpClient client;
                 if(acquire_connected_client(client_id, out client)) {
-                    Console.WriteLine("Client acquired. Data length="+data.Length);
+                    Console.WriteLine("Invoked...");
+                    data=LZ4Compressor.Compress(data);
                     data=FramingProtocol.WrapMessage(data);
-                    await client.GetStream().WriteAsync(data,0,data.Length);
-                    return await Task.FromResult<bool>(true);
+                    await client.GetStream().WriteAsync(data,0,data.Length).ConfigureAwait(false);
+                    Console.WriteLine("... returned");
+                    return true;//return await Task.FromResult<bool>(true);
                 } else {
-                    return await Task.FromResult<bool>(false);
+                    return false;//await Task.FromResult<bool>(false);
                 }
             } catch(Exception e) {
                 Console.WriteLine("[Server] ASYNC_send error: "+e.Message);
                 Console.WriteLine(e.StackTrace);
-                return await Task.FromResult<bool>(false);
+                return false;// await Task.FromResult<bool>(false);
             }
         }
 
@@ -74,13 +79,53 @@ namespace D3DCaptureApp {
             return await ASYNC_send(client_id, bytes_data);
         }
         
-        public async Task<bool> ASYNC_sendToAll_bytes(byte[] data) {
+        public async Task<bool[]> ASYNC_sendToAll_bytes(byte[] data) {
+            bool status = true;
+            List<Task<bool>> tasks = new List<Task<bool>>();
+            foreach(KeyValuePair<Guid,TcpClient> client in _clients) {
+                Task<bool> task_sendclient = ASYNC_send_bytes(client.Key,data);
+                status=(!(await task_sendclient) ? false : status);
+            }
+            return await Task.WhenAll(tasks.ToArray());
+            //return await Task.FromResult<bool>(status);
+        }
+
+        public bool send(Guid client_id,byte[] data) {
+            try {
+                TcpClient client;
+                if(acquire_connected_client(client_id,out client)) {
+                    Console.WriteLine("[Server] [send (Time: "+DateTime.Now+": "+DateTime.Now.Millisecond+"ms)] Invoked...");
+                    Console.Write("[Server] ");
+                    data=LZ4Compressor.Compress(data);
+                    data=FramingProtocol.WrapMessage(data);
+                    client.GetStream().Write(data,0,data.Length);
+                    Console.WriteLine("[Server] ... data transferred at time: "+DateTime.Now+": "+DateTime.Now.Millisecond+"ms");
+                    return true;//return await Task.FromResult<bool>(true);
+                } else {
+                    return false;//await Task.FromResult<bool>(false);
+                }
+            } catch(Exception e) {
+                Console.WriteLine("[Server] send error: "+e.Message);
+                Console.WriteLine(e.StackTrace);
+                return false;// await Task.FromResult<bool>(false);
+            }
+        }
+
+        public bool send_bytes(Guid client_id,byte[] data) {
+            return send(client_id,data);
+        }
+
+        public bool send_integers(Guid client_id,int[] data) {
+            byte[] bytes_data = toByteArray(data);
+            return send(client_id,bytes_data);
+        }
+
+        public bool sendToAll_bytes(byte[] data) {
             bool status = true;
             foreach(KeyValuePair<Guid,TcpClient> client in _clients) {
-                if(!await ASYNC_send_bytes(client.Key,data))
-                    status=false;
+                status=(!(send_bytes(client.Key,data)))==false ? false : status;
             }
-            return await Task.FromResult<bool>(status);
+            return status;
         }
 
         public static byte[] toByteArray(int[] data) {

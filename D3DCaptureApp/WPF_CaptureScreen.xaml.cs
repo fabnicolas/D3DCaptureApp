@@ -1,8 +1,5 @@
-﻿using System;
-using System.IO;
-using System.Threading;
+﻿using System.Threading;
 using System.Windows;
-using System.Windows.Media.Imaging;
 
 namespace D3DCaptureApp {
     public partial class WPF_CaptureScreen:Window {
