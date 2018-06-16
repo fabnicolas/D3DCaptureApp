@@ -1,16 +1,21 @@
-﻿using System;
+﻿using log4net;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace D3DCaptureApp {
     /// <summary>
     /// Server.
     /// </summary>
+    /// 
     class NetServer {
+        private static readonly ILog logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
         private TcpListener _server;
         private ConcurrentDictionary<Guid,TcpClient> _clients;
         private FramingProtocol _packetizer;
