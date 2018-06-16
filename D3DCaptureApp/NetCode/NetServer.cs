@@ -1,20 +1,16 @@
-﻿using log4net;
+﻿using Serilog.Core;
+using SerilogLoggerSystem;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace D3DCaptureApp {
-    /// <summary>
-    /// Server.
-    /// </summary>
-    /// 
     class NetServer {
-        private static readonly ILog logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private readonly Logger logger = SerilogFactory.GetLogger();
 
         private TcpListener _server;
         private ConcurrentDictionary<Guid,TcpClient> _clients;
@@ -39,14 +35,14 @@ namespace D3DCaptureApp {
                 _clients.TryAdd(new_client_id,client);
                 return new_client_id;
             } catch(ArgumentNullException ane) {
-                Console.WriteLine("Argument is null.");
-                Console.WriteLine(ane.Message);
-                Console.WriteLine(ane.StackTrace);
+                logger.Information("Argument is null.");
+                logger.Information(ane.Message);
+                logger.Information(ane.StackTrace);
                 return Guid.Empty;
             } catch(OverflowException ofe) {
-                Console.WriteLine("Maximum number of possible clients reached.");
-                Console.WriteLine(ofe.Message);
-                Console.WriteLine(ofe.StackTrace);
+                logger.Information("Maximum number of possible clients reached.");
+                logger.Information(ofe.Message);
+                logger.Information(ofe.StackTrace);
                 return Guid.Empty;
             }
         }
@@ -62,35 +58,33 @@ namespace D3DCaptureApp {
             return try_remove;
         }
         
+        /* ASYNC METHODS TO FIX
         public async Task<bool> ASYNC_send(Guid client_id, byte[] data) {
             try {
                 TcpClient client;
                 if(AcquireConnectedClient(client_id, out client)) {
-                    Console.WriteLine("Invoked...");
+                    logger.Information("Invoked...");
                     data=LZ4Compressor.Compress(data);
                     data=FramingProtocol.WrapMessage(data);
                     await client.GetStream().WriteAsync(data,0,data.Length).ConfigureAwait(false);
-                    Console.WriteLine("... returned");
+                    logger.Information("... returned");
                     return true;//return await Task.FromResult<bool>(true);
                 } else {
                     return false;//await Task.FromResult<bool>(false);
                 }
             } catch(Exception e) {
-                Console.WriteLine("[Server] ASYNC_send error: "+e.Message);
-                Console.WriteLine(e.StackTrace);
+                logger.Information("Exception occurred while sending data as byte[] stream: "+e.Message);
+                logger.Information(e.StackTrace);
                 return false;// await Task.FromResult<bool>(false);
             }
         }
-
         public async Task<bool> ASYNC_send_bytes(Guid client_id, byte[] data) {
             return await ASYNC_send(client_id, data);
         }
-
         public async Task<bool> ASYNC_send_integers(Guid client_id, int[] data) {
             byte[] bytes_data = ConvertArraysIntToByte(data);
             return await ASYNC_send(client_id, bytes_data);
-        }
-        
+        }   
         public async Task<bool[]> ASYNC_sendToAll_bytes(byte[] data) {
             bool status = true;
             List<Task<bool>> tasks = new List<Task<bool>>();
@@ -100,27 +94,29 @@ namespace D3DCaptureApp {
             }
             return await Task.WhenAll(tasks.ToArray());
         }
+        */
 
         public bool Send(Guid client_id,byte[] data) {
             try {
                 TcpClient client;
                 if(AcquireConnectedClient(client_id,out client)) {
-                    Console.WriteLine("[Server] [send (Time: "+DateTime.Now+": "+DateTime.Now.Millisecond+"ms)] Invoked on "+data.Length+" data...");
+                    logger.Information("Data length to compress: "+data.Length+" bytes; compressing and wrapping...");
                     data=LZ4Compressor.Compress(data);
                     data=FramingProtocol.WrapMessage(data);
+                    logger.Information("Data length after processing: "+data.Length+" bytes. Writing on stream.");
                     client.GetStream().Write(data,0,data.Length);
-                    Console.WriteLine("[Server] ... "+data.Length+" data transferred at time: "+DateTime.Now+": "+DateTime.Now.Millisecond+"ms");
+                    logger.Information(data.Length+" bytes wrote on stream!");
                     return true;
                 } else {
                     return false;
                 }
             } catch(Exception e) {
                 if(e is IOException || e is InvalidOperationException || e is ObjectDisposedException) {
-                    Console.WriteLine("[Server] Socket connection lost with client with guid: "+client_id+". Client detached from server.");
+                    logger.Information("Socket connection lost with client with guid: "+client_id+". Client detached from server.");
                     DisconnectClient(client_id);
                 } else {
-                    Console.WriteLine("[Server] send error: "+e.Message);
-                    Console.WriteLine(e.StackTrace);
+                    logger.Information("An error has occurred while sending data: "+e.Message);
+                    logger.Information(e.StackTrace);
                 }
                 return false;
             }

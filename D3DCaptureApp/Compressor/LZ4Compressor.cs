@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Serilog.Core;
+using SerilogLoggerSystem;
 
 namespace D3DCaptureApp {
     /// <summary>
@@ -11,6 +12,8 @@ namespace D3DCaptureApp {
     /// Requires NuGet package: lz4net (More info: https://github.com/MiloszKrajewski/lz4net)
     /// </summary>
     class LZ4Compressor {
+        private static readonly Logger logger = SerilogFactory.GetLogger();
+
         /// <summary>
         /// Compress byte array using LZ4 algorithm (LZ4.LZ4Codec.Encode).
         /// </summary>
@@ -30,7 +33,7 @@ namespace D3DCaptureApp {
             for(int i = 0;i<output_length;i++)
                 compressed_buffer[i]=output_buffer[i];
 
-            //Console.WriteLine("[LZ4Compressor.Compress] Before: "+input_buffer_length+", after: "+output_length);
+            logger.Information("LZ4 compression done; before: "+input_buffer_length+" bytes, after: "+output_length+" bytes.");
 
             return compressed_buffer;
         }
@@ -54,7 +57,7 @@ namespace D3DCaptureApp {
             for(int i = 0;i<output_length;i++)
                 compressed_buffer[i]=output_buffer[i];
 
-            //Console.WriteLine("[LZ4Compressor.Decompress] Before: "+input_buffer_length+", after: "+output_length);
+            logger.Information("LZ4 decompression done; before: "+input_buffer_length+" bytes, after: "+output_length+" bytes.");
 
             return output_buffer;
         }

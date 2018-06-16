@@ -1,14 +1,17 @@
-﻿using System;
+﻿using Serilog.Core;
+using SerilogLoggerSystem;
+using System;
 using System.IO;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 
 namespace D3DCaptureApp {
-    class NetClient { 
+    class NetClient {
+        private readonly Logger logger = SerilogFactory.GetLogger();
+
         private TcpClient _client;
-        private FramingProtocol packetizer = new FramingProtocol(2000000);
-        private string ip;
-        private int port;
+        private readonly FramingProtocol packetizer = new FramingProtocol(2000000);
+        private readonly string ip;
+        private readonly int port;
         private FramingProtocol _packetizer;
 
         public NetClient(string ip, int port) {
@@ -28,6 +31,7 @@ namespace D3DCaptureApp {
             _client.GetStream().Dispose();
         }
         
+        /* ASYNC METHODS TO FIX
         public async Task<bool> ASYNC_send(Guid client_id, byte[] data) {
             try {
                 using(NetworkStream stream = _client.GetStream()) {
@@ -35,8 +39,8 @@ namespace D3DCaptureApp {
                     return await Task.FromResult<bool>(true);
                 }
             } catch(Exception e) {
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
+                logger.Information(e.Message);
+                logger.Information(e.StackTrace);
                 return await Task.FromResult<bool>(false);
             }
         }
@@ -64,14 +68,14 @@ namespace D3DCaptureApp {
                         Console.Write("bytes_received="+bytes+",packing...");
                         _packetizer.HandleReadData(data);
                     } catch(ObjectDisposedException) {
-                        Console.WriteLine("Object disposed exception");
+                        logger.Information("Object disposed exception");
                         stop_client();
                         start_client();
                     }
                 }
             } catch(Exception e) {
-                Console.WriteLine("[Client] ASYNC_on_server_response error: "+e.Message+"=TYPE="+e.GetType().Name);
-                Console.WriteLine(e.StackTrace);
+                logger.Information("[Client] ASYNC_on_server_response error: "+e.Message+"=TYPE="+e.GetType().Name);
+                logger.Information(e.StackTrace);
             }
             return await Task.FromResult<object>(null);
         }
@@ -85,33 +89,38 @@ namespace D3DCaptureApp {
                 return await Task.FromResult<byte[]>(null);
             }
         }
+        */
 
-        public void on_server_response(Action<byte[]> callback) {
+        public void OnServerMessage(Action<byte[]> callback) {
             try {
                 byte[] buffer = new Byte[4573600];
-                _packetizer.onTransferComplete=(data => {
+                _packetizer.OnTransferCompleted=(data => {
                     if(data!=null) {
-                        Console.WriteLine("[Client] Depacking done. Data buffer length="+data.Length+". Decompressing...");
-                        byte[] extracted_data = process_data(data,data.Length);
-                        if(extracted_data!=null) callback(extracted_data);
+                        logger.Information("Depacking done. Data buffer length="+data.Length+". Processing data...");
+                        byte[] extracted_data = ProcessData(data,data.Length);
+                        if(extracted_data!=null) {
+                            callback(extracted_data);
+                        } else {
+                            logger.Information("Notice: extracted_data is null.");
+                        }
                     }
                 });
                 while(true) {   // Read input stream
                     try {
                         NetworkStream stream = _client.GetStream();
-                        Console.WriteLine("[Client] Waiting for server response...");
+                        logger.Information("[Client] Waiting for server response...");
                         int bytes = stream.Read(buffer,0,buffer.Length);
                         byte[] data = new byte[bytes];
                         for(int i = 0;i<bytes;i++) {
                             data[i]=buffer[i];
                         }
-                        Console.WriteLine("[Client] Received from server "+bytes+" bytes. Unpacking...");
+                        logger.Information("[Client] Received from server "+bytes+" bytes. Unpacking...");
                         _packetizer.HandleReadData(data);
                     }catch(Exception e) {
                         if(e is System.Net.ProtocolViolationException) {
-                            Console.WriteLine("[Client] Error on frame dimension. Sending data will be skipped.");
+                            logger.Information("[Client] Error on frame dimension. Sending data will be skipped.");
                         }else if(e is ObjectDisposedException) {
-                            Console.WriteLine("Object disposed exception");
+                            logger.Information("Object disposed exception");
                             stop_client();
                             start_client();
                         } else {
@@ -120,19 +129,20 @@ namespace D3DCaptureApp {
                     }
                 }
             } catch(Exception e) {
-                Console.WriteLine("[Client] on_server_response error: "+e.Message+"=TYPE="+e.GetType().Name);
-                Console.WriteLine(e.StackTrace);
+                logger.Information("Error not handled (Exception type: "+e.GetType().Name+"): "+e.Message);
+                logger.Information(e.StackTrace);
             }
         }
 
-        private byte[] process_data(byte[] buffer,int bytes) {
+        private byte[] ProcessData(byte[] buffer,int bytes) {
             if(bytes>0) {
-                Console.Write("[Client] ");
                 try {
+                    logger.Information("It's time to process "+buffer.Length+" bytes. Trying decompressing...");
                     byte[] data = LZ4Compressor.Decompress(buffer);
+                    logger.Information("LZ4 decompression done from "+buffer.Length+" bytes to: "+data.Length+" bytes.");
                     return data;
                 }catch(ArgumentException) {
-                    Console.WriteLine("LZ4 decompression error, skipping frame!");
+                    logger.Information("LZ4 decompression error, skipping frame!");
                     return null;
                 }
             } else {
@@ -140,7 +150,7 @@ namespace D3DCaptureApp {
             }
         }
 
-        public static byte[] toByteArray(int[] data) {
+        public static byte[] ConvertArraysIntToByte(int[] data) {
             byte[] bytes;
             using(var ms = new MemoryStream())
             using(var bw = new BinaryWriter(ms)) {

@@ -1,20 +1,24 @@
-﻿using System;
+﻿using Serilog.Core;
+using SerilogLoggerSystem;
+using System;
 
 namespace D3DCaptureApp {
     /// <summary>
     /// 
     /// </summary>
     public class FramingProtocol {
+        private readonly Logger logger = SerilogFactory.GetLogger();
+
         // Packet data
         private byte[] buffer_payload, buffer_data;
 
         // Protocol details
         private int n_bytes_received;   // The amount of bytes received (The total one is buffer_data.Length)
         private int max_length_message; // Maximum amount of data allowed (To prevent specific DDoS attack)
-        private bool _instadrop = false; // (Temporary) Drop packets if connection isn't fast enough (For streaming)
+        public bool _instadrop = false; // (Temporary) Drop packets if connection isn't fast enough (For streaming)
 
         // Callbacks
-        public Action<byte[]> onTransferComplete { get; set; }  // Transfer is completed
+        public Action<byte[]> OnTransferCompleted { get; set; }  // Transfer is completed
 
         public FramingProtocol(int max_length_message) {
             buffer_payload=new byte[sizeof(int)];   // Payload is at beginning of the packet and it has integer size
@@ -41,10 +45,10 @@ namespace D3DCaptureApp {
                 // Buffer selection (Payload must be filled before filling data).
                 byte[] buffer;
                 if(buffer_data==null) {
-                    Console.WriteLine("[PacketProtocol] Using payload buffer");
+                    logger.Information("Writing data on payload buffer...");
                     buffer=buffer_payload;
                 } else {
-                    Console.WriteLine("[PacketProtocol] Using data buffer");
+                    logger.Information("Writing data on data buffer...");
                     buffer=buffer_data;
                 }
 
@@ -56,12 +60,12 @@ namespace D3DCaptureApp {
                 i+=n_bytes_transferred;
 
 
-                Console.WriteLine("[PacketProtocol] i="+i+",d.L="+data.Length+",expected="+(buffer_data!=null ? buffer_data.Length : 4)+",nrec="+n_bytes_received+",nreq="+n_bytes_requested+",nt="+n_bytes_transferred+",payload="+BitConverter.ToInt32(buffer_payload,0));
+                logger.Information("i="+i+",d.L="+data.Length+",expected="+(buffer_data!=null ? buffer_data.Length : 4)+",nrec="+n_bytes_received+",nreq="+n_bytes_requested+",nt="+n_bytes_transferred+",payload="+BitConverter.ToInt32(buffer_payload,0));
 
 
                 ReadCompleted(n_bytes_transferred); // Notify "read completion"
             }
-            Console.WriteLine("[PacketProtocol] No more data");
+            logger.Information("There is no more data.");
         }
         
         private void ReadCompleted(int count) {
@@ -82,8 +86,7 @@ namespace D3DCaptureApp {
                     n_bytes_received=0;
                     if(length==0) {
                         // Zero-length packets are allowed as keepalives
-                        if(onTransferComplete!=null)
-                            onTransferComplete(new byte[0]);
+                        OnTransferCompleted?.Invoke(new byte[0]);
                     } else {
                         // Create the data buffer and start reading into it
                         buffer_data=new byte[length];
@@ -93,14 +96,12 @@ namespace D3DCaptureApp {
                 bool reset = false;
                 if(n_bytes_received==buffer_data.Length) {
                     // Packet is ready! Let's callback with the full data.
-                    Console.WriteLine(DateTime.Now+": COMPLETE ("+n_bytes_received+")");
-                    if(onTransferComplete!=null)
-                        onTransferComplete(this.buffer_data);
+                    logger.Information("Transfer: COMPLETE ("+n_bytes_received+" bytes)!");
+                    OnTransferCompleted?.Invoke(this.buffer_data);
                     reset=true;
                 } else if(_instadrop && count!=buffer_data.Length) {
-                    Console.WriteLine(DateTime.Now+": DROPPED");
-                    if(onTransferComplete!=null)
-                        onTransferComplete(null);
+                    logger.Information("Transfer: INTERRUPTED (DROPPED)!");
+                    OnTransferCompleted?.Invoke(null);
                     reset=true;
                 }// Else we haven't gotten all the data buffer yet: just wait for more data to arrive
 
