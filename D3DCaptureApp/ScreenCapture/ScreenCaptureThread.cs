@@ -14,7 +14,7 @@ namespace D3DCaptureApp {
 
         public ScreenCaptureThread() { }
 
-        public void start() {
+        public void StartCapture() {
             _run=true;
             var factory = new Factory1();   // SharpDX DXGI Factory
             var adapter = factory.GetAdapter1(0); // Get first video card (Adapter) 
@@ -51,7 +51,7 @@ namespace D3DCaptureApp {
                     var screen_capture_rect = new Rectangle(0,0,screen_width,screen_height);
 
                     while(_run) {
-                        int start = DateTime.Now.Millisecond;
+                        //int start = DateTime.Now.Millisecond;
                         try {
                             // Try to get duplicated frame within given time is ms
                             output_clone.AcquireNextFrame(5,out output_frame_info,out output_frame_resource);
@@ -87,7 +87,7 @@ namespace D3DCaptureApp {
 
                                 using(var ms = new MemoryStream()) {
                                     bitmap_screen.Save(ms,ImageFormat.Bmp); // Save bitmap pixels in a stream
-                                    onFrameReady?.Invoke(this,ms.ToArray()); // Return bitmap pixels from a stream to the caller
+                                    OnFrameReady?.Invoke(this,ms.ToArray()); // Return bitmap pixels from a stream to the caller
                                     _init=true;
                                 }
                             }
@@ -102,7 +102,7 @@ namespace D3DCaptureApp {
                                 }
                             } else { throw; }
                         }
-                        int end = DateTime.Now.Millisecond;
+                        //int end = DateTime.Now.Millisecond;
 
                         //if((end-start)<15) System.Threading.Thread.Sleep(16-(end-start)); // 60 FPS cap attempt
                         //Console.WriteLine("--TIME_ELAPSED="+(end-start)+"ms");
@@ -117,6 +117,6 @@ namespace D3DCaptureApp {
             _run=false;
         }
 
-        public EventHandler<byte[]> onFrameReady;
+        public EventHandler<byte[]> OnFrameReady;
     }
 }

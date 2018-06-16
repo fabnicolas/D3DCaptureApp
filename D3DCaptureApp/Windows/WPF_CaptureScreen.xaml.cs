@@ -16,13 +16,12 @@ namespace D3DCaptureApp {
         public void start_capture() {
             logger.Information("Capture started.");
             ScreenCaptureThread screen_capture_thread = new ScreenCaptureThread();
-            ScreenCaptureWPFRenderer renderer = new ScreenCaptureWPFRenderer();
-            screen_capture_thread.onFrameReady+=(sender,frame_bytes) => {
+            screen_capture_thread.OnFrameReady+=(sender,frame_bytes) => {
                 Dispatcher.BeginInvoke(new ThreadStart(() =>
-                    ImgCanvas.Source=renderer.render(frame_bytes)
+                    ImgCanvas.Source=ScreenCaptureWPFRenderer.Render(frame_bytes)
                 ));
             };
-            screen_capture_thread.start();
+            screen_capture_thread.StartCapture();
         }
 
         private void fullscreen() {

@@ -1,6 +1,5 @@
 ﻿using Serilog.Core;
 using SerilogLoggerSystem;
-using System;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -22,10 +21,9 @@ namespace D3DCaptureApp {
 
         public void ReadServerResponse() {
             logger.Information("Capture started.");
-            ScreenCaptureWPFRenderer renderer = new ScreenCaptureWPFRenderer();
             _client.OnServerMessage((frame_bytes) => {
                 logger.Information("Sending rendering request with "+frame_bytes.Length+" bytes as frame...");
-                Dispatcher.Invoke(() => ImgCanvas.Source=renderer.render(frame_bytes));
+                Dispatcher.Invoke(() => ImgCanvas.Source=ScreenCaptureWPFRenderer.Render(frame_bytes));
             });
         }
     }
