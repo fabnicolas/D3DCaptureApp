@@ -93,20 +93,20 @@
       <SubType>Designer</SubType>
     </Page>
     <Compile Include="Launcher.cs" />
-    <Compile Include="LZ4Compressor.cs" />
-    <Compile Include="NetClient.cs" />
-    <Compile Include="PacketProtocol.cs" />
-    <Compile Include="ScreenCaptureWPFRenderer.cs" />
-    <Compile Include="WPF_Join.xaml.cs">
+    <Compile Include="Compressor\LZ4Compressor.cs" />
+    <Compile Include="NetCode\NetClient.cs" />
+    <Compile Include="NetCode\PacketProtocol.cs" />
+    <Compile Include="ScreenCapture\ScreenCaptureWPFRenderer.cs" />
+    <Compile Include="Windows\WPF_Join.xaml.cs">
       <DependentUpon>WPF_Join.xaml</DependentUpon>
     </Compile>
-    <Compile Include="WPF_Main.xaml.cs">
+    <Compile Include="Windows\WPF_Main.xaml.cs">
       <DependentUpon>WPF_Main.xaml</DependentUpon>
     </Compile>
-    <Compile Include="WPF_Host.xaml.cs">
+    <Compile Include="Windows\WPF_Host.xaml.cs">
       <DependentUpon>WPF_Host.xaml</DependentUpon>
     </Compile>
-    <Page Include="WPF_CaptureScreen.xaml">
+    <Page Include="Windows\WPF_CaptureScreen.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -114,21 +114,21 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="NetServer.cs" />
-    <Compile Include="ScreenCaptureThread.cs" />
-    <Compile Include="WPF_CaptureScreen.xaml.cs">
+    <Compile Include="NetCode\NetServer.cs" />
+    <Compile Include="ScreenCapture\ScreenCaptureThread.cs" />
+    <Compile Include="Windows\WPF_CaptureScreen.xaml.cs">
       <DependentUpon>WPF_CaptureScreen.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="WPF_Join.xaml">
+    <Page Include="Windows\WPF_Join.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="WPF_Main.xaml">
+    <Page Include="Windows\WPF_Main.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="WPF_Host.xaml">
+    <Page Include="Windows\WPF_Host.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -131,7 +131,7 @@ namespace D3DCaptureApp {
                 try {
                     byte[] data = LZ4Compressor.Decompress(buffer);
                     return data;
-                }catch(ArgumentException e) {
+                }catch(ArgumentException) {
                     Console.WriteLine("LZ4 decompression error, skipping frame!");
                     return null;
                 }
