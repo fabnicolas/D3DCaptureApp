@@ -38,6 +38,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -103,6 +104,7 @@
     <Compile Include="NetCode\NetClient.cs" />
     <Compile Include="NetCode\PacketProtocol.cs" />
     <Compile Include="ScreenCapture\ScreenCaptureWPFRenderer.cs" />
+    <Compile Include="ScreenCapture\ScreenInterpolator.cs" />
     <Compile Include="Windows\WPF_Join.xaml.cs">
       <DependentUpon>WPF_Join.xaml</DependentUpon>
     </Compile>
