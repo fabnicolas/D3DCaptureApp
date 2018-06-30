@@ -43,9 +43,9 @@ namespace D3DCaptureApp {
         /// </summary>
         /// <param name="input_buffer">The input byte array to decompress.</param>
         /// <returns>The decompressed version of the input byte array.</returns>
-        public static byte[] Decompress(byte[] input_buffer) {
+        public static byte[] Decompress(byte[] input_buffer, int expected_length=-1) {
             var input_buffer_length = input_buffer.Length;
-            var input_buffer_max_length = input_buffer_length*30;
+            var input_buffer_max_length = (expected_length!=-1) ? expected_length : input_buffer_length*255;
             var output_buffer = new byte[input_buffer_max_length];
 
             var output_length = LZ4.LZ4Codec.Decode(
@@ -59,7 +59,7 @@ namespace D3DCaptureApp {
 
             logger.Information("LZ4 decompression done; before: "+input_buffer_length+" bytes, after: "+output_length+" bytes.");
 
-            return output_buffer;
+            return compressed_buffer;
         }
     }
 }

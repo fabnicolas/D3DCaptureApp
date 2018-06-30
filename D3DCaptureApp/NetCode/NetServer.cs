@@ -103,7 +103,7 @@ namespace D3DCaptureApp {
                     logger.Information("Data length to compress: "+data.Length+" bytes; compressing and wrapping...");
                     data=LZ4Compressor.Compress(data);
                     data=FramingProtocol.WrapMessage(data);
-                    logger.Information("Data length after processing: "+data.Length+" bytes. Writing on stream.");
+                    logger.Information("Data length after processing: "+data.Length+" bytes (Payload size=4 bytes). Writing on stream.");
                     client.GetStream().Write(data,0,data.Length);
                     logger.Information(data.Length+" bytes wrote on stream!");
                     return true;
@@ -115,7 +115,7 @@ namespace D3DCaptureApp {
                     logger.Information("Socket connection lost with client with guid: "+client_id+". Client detached from server.");
                     DisconnectClient(client_id);
                 } else {
-                    logger.Information("An error has occurred while sending data: "+e.Message);
+                    logger.Information("An error has occurred while sending data: "+e.Message+"\n");
                     logger.Information(e.StackTrace);
                 }
                 return false;
@@ -131,7 +131,7 @@ namespace D3DCaptureApp {
             return Send(client_id,bytes_data);
         }
 
-        public bool sendToAll_bytes(byte[] data) {
+        public bool SendBytesBroadcast(byte[] data) {
             bool status = true;
             foreach(KeyValuePair<Guid,TcpClient> client in _clients) {
                 status=(!(SendBytes(client.Key,data)))==false ? false : status;

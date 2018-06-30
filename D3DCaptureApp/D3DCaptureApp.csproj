@@ -96,6 +96,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Compile Include="Impl\ScreenClient.cs" />
+    <Compile Include="Impl\ScreenServer.cs" />
     <Compile Include="Launcher.cs" />
     <Compile Include="Compressor\LZ4Compressor.cs" />
     <Compile Include="Logger\Serilog\EnrichExtender.cs" />
@@ -180,5 +182,6 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

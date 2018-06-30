@@ -1,30 +1,19 @@
-﻿using Serilog.Core;
-using SerilogLoggerSystem;
+﻿using D3DCaptureApp.Impl;
 using System.Threading.Tasks;
 using System.Windows;
 
 namespace D3DCaptureApp {
     public partial class WPF_Join:Window {
-        private readonly Logger logger = SerilogFactory.GetLogger();
-
-        NetClient _client;
+        ScreenClient _client;
 
         public WPF_Join() {
             InitializeComponent();
+            _client=new ScreenClient();
         }
 
         public async Task StartClient(string ip, int port) {
-            _client=new NetClient(ip,port);
-            _client.start_client();
-            await Task.Run(() => ReadServerResponse());
-        }
-
-        public void ReadServerResponse() {
-            logger.Information("Capture started.");
-            _client.OnServerMessage((frame_bytes) => {
-                logger.Information("Sending rendering request with "+frame_bytes.Length+" bytes as frame...");
-                Dispatcher.Invoke(() => ImgCanvas.Source=ScreenCaptureWPFRenderer.Render(frame_bytes));
-            });
+            _client.OnServerMessage+=(frame) => Dispatcher.Invoke(() => this.ImgCanvas.Source=frame);
+            await _client.StartClient(ip,port);
         }
     }
 }

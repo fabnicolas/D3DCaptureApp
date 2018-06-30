@@ -85,7 +85,7 @@ namespace D3DCaptureApp {
                                 bitmap_screen.UnlockBits(map_dest);
                                 device.ImmediateContext.UnmapSubresource(texture_screen,0);
 
-                                using(var ms = new MemoryStream()) {
+                                using(MemoryStream ms = new MemoryStream()) {
                                     bitmap_screen.Save(ms,ImageFormat.Bmp); // Save bitmap pixels in a stream
                                     OnFrameReady?.Invoke(this,ms.ToArray()); // Return bitmap pixels from a stream to the caller
                                     _init=true;
@@ -94,8 +94,7 @@ namespace D3DCaptureApp {
                             output_frame_resource.Dispose();
                             output_clone.ReleaseFrame();
                         } catch(Exception exception) {
-                            if(exception is SharpDXException) {
-                                SharpDXException e = (SharpDXException)exception;
+                            if(exception is SharpDXException e) {
                                 if(e.ResultCode.Code!=SharpDX.DXGI.ResultCode.WaitTimeout.Result.Code) {
                                     Trace.TraceError(e.Message);
                                     Trace.TraceError(e.StackTrace);

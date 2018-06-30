@@ -23,11 +23,11 @@ namespace D3DCaptureApp {
             _packetizer=new FramingProtocol(4573600);
         }
 
-        public async void start_client() {
+        public async void StartClient() {
             await _client.ConnectAsync(ip,port);
         }
 
-        public void stop_client() {
+        public void StopClient() {
             _client.GetStream().Dispose();
         }
         
@@ -101,7 +101,7 @@ namespace D3DCaptureApp {
                         if(extracted_data!=null) {
                             callback(extracted_data);
                         } else {
-                            logger.Information("Notice: extracted_data is null.");
+                            logger.Information("Notice: extracted_data is null.\n");
                         }
                     }
                 });
@@ -121,8 +121,8 @@ namespace D3DCaptureApp {
                             logger.Information("[Client] Error on frame dimension. Sending data will be skipped.");
                         }else if(e is ObjectDisposedException) {
                             logger.Information("Object disposed exception");
-                            stop_client();
-                            start_client();
+                            StopClient();
+                            StartClient();
                         } else {
                             throw;
                         }
