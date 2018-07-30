@@ -1,0 +1,3 @@
+- Improve communication
+- Implement frame-skipping
+- Implement mouse commands
