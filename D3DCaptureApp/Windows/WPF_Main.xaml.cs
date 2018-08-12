@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using D3DCaptureApp.Utils;
+using System.Windows;
 
 namespace D3DCaptureApp {
     public partial class WPF_Main:Window {
@@ -19,11 +20,13 @@ namespace D3DCaptureApp {
         private void listener_button_show_host(object sender,RoutedEventArgs e) {
             _mode=0;
             expand(100);
+            WindowUtils.CenterWindow(this);
         }
 
         private void listener_button_show_join(object sender,RoutedEventArgs e) {
             _mode=1;
             expand(100);
+            WindowUtils.CenterWindow(this);
         }
 
         private async void listener_button_start(object sender,RoutedEventArgs e) {
